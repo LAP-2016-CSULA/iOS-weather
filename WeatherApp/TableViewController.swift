@@ -52,7 +52,8 @@ class TableViewController: UITableViewController{
                 let time = dateTime[rangeTime]
                 let date = dateTime[rangeDate]
                 
-                let temperature = String(subJson["main"]["temp"])
+                let kTemperature = String(subJson["main"]["temp"])
+                let temperature = self.kelvintoFahrenheit(kTemperature)
                 var weather = "";
                 
                 for(_,weath):(String, JSON) in subJson["weather"]
@@ -93,12 +94,27 @@ class TableViewController: UITableViewController{
         day = forecast[indexPath.row]
         
         //To be displayed on cell
-        let displayRow: String = day.date + "     " + day.weather + "     " + day.temperature + "K"
+        let displayRow: String = day.date + "     " + day.weather + "     " + day.temperature + "F"
         cell.textLabel?.text = displayRow
         
         return cell
     }
+    
+    //Converts Kelvin to Fahrenheit
+    func kelvintoFahrenheit(kelv:String) ->String
+    {
+        let kelvin = Double(kelv)
+        let tFahr:String = String(kelvin! * (9.0/5.0) - 459.67)
 
-
+        if (tFahr.characters.count > 4)
+        {
+            let fRange = tFahr.startIndex..<tFahr.startIndex.advancedBy(4)
+            return tFahr[fRange]
+        }
+        else
+        {
+            return tFahr
+        }
+    }
 }
 
