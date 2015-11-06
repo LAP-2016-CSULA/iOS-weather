@@ -9,7 +9,6 @@
 import UIKit
 
 class TableViewController: UITableViewController{
-
     
     var forecast = [Forecast]()
 //    Mutable Array may be needed, Structure will be used for now.
@@ -20,8 +19,7 @@ class TableViewController: UITableViewController{
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
-//        adds some days of the week, Testing purposes
-//        forecast = [Forecast(day: "Monday"),Forecast(day: "Tuesday"),Forecast(day: "Wednesday"), Forecast(day: "Thursday"), Forecast(day: "Friday")]
+        tableView.backgroundColor = UIColor.grayColor()
         
         //Gets Five Day Forecast
         getFiveDayForecastData()
@@ -53,21 +51,28 @@ class TableViewController: UITableViewController{
                 let date = dateTime[rangeDate]
                 
                 let kTemperature = String(subJson["main"]["temp"])
-                let temperature = self.kelvintoFahrenheit(kTemperature)
                 var weather = "";
                 
+                //accesses JSON list and gets weather
                 for(_,weath):(String, JSON) in subJson["weather"]
                 {
                     weather = String(weath["main"])
                 }
                 
-                print(weather)
-                
-                //removes everything except weather at noon
-                if(time == "12:00:00")
+                //removes everything except weather at a certain time
+                if(time == "21:00:00")
                 {
+                    let dateFormatter = NSDateFormatter()
+                    dateFormatter.dateFormat = "yyyy-MM-dd"
+                    let nDate = dateFormatter.dateFromString(date);
+                    dateFormatter.dateFormat = "EEEE"
+                    
+                    let rDate = dateFormatter.stringFromDate(nDate!)
+                    
+                    let temperature = self.kelvintoFahrenheit(kTemperature)
+
                     //creates a new forecast struct
-                    let day:Forecast = Forecast(date: date, time: time, weather: weather ,temperature: temperature)
+                    let day:Forecast = Forecast(date: rDate, time: time, weather: weather ,temperature: temperature)
                     
                     self.forecast.insert(day, atIndex: self.forecast.count)
                 }
@@ -84,7 +89,7 @@ class TableViewController: UITableViewController{
     
     //identifies each cell per row
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        
+
         let cell = tableView.dequeueReusableCellWithIdentifier("Cell", forIndexPath: indexPath) as UITableViewCell
         
         let day : Forecast
@@ -97,6 +102,8 @@ class TableViewController: UITableViewController{
         let displayRow: String = day.date + "     " + day.weather + "     " + day.temperature + "F"
         cell.textLabel?.text = displayRow
         
+        cell.backgroundColor = UIColor.clearColor()
+        
         return cell
     }
     
@@ -104,8 +111,8 @@ class TableViewController: UITableViewController{
     func kelvintoFahrenheit(kelv:String) ->String
     {
         let kelvin = Double(kelv)
-        let tFahr:String = String(kelvin! * (9.0/5.0) - 459.67)
-
+        let tFahr:String = String(((kelvin! * 9.0)/5.0) - 459.67)
+        
         if (tFahr.characters.count > 4)
         {
             let fRange = tFahr.startIndex..<tFahr.startIndex.advancedBy(4)

@@ -25,16 +25,12 @@
                                 <animations/>
                             </tableViewCell>
                         </prototypes>
-                        <connections>
-                            <outlet property="dataSource" destination="nJY-En-hBV" id="AGT-oA-9bH"/>
-                            <outlet property="delegate" destination="nJY-En-hBV" id="8vM-64-dQd"/>
-                        </connections>
                     </tableView>
                     <navigationItem key="navigationItem" id="Was-JT-pLa"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Tar-AF-Vlc" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="525" y="574"/>
+            <point key="canvasLocation" x="511" y="554"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="6F5-4e-57P">
@@ -50,6 +46,11 @@
                     </connections>
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="7kF-5J-Tju" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" id="RKE-Bn-CEy">
+                    <rect key="frame" x="0.0" y="0.0" width="240" height="128"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <animations/>
+                </imageView>
             </objects>
             <point key="canvasLocation" x="-250" y="563"/>
         </scene>
