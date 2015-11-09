@@ -7,23 +7,32 @@
 //
 
 import UIKit
+import MapKit
 
 class TableViewController: UITableViewController{
     
+    var manager : OneShotLocationManager?
     var forecast = [Forecast]()
 //    Mutable Array may be needed, Structure will be used for now.
 //    var items = NSMutableArray()
     var city:String = ""
+    var lat: String = ""
+    var lon: String = ""
+    
+    let locationManager = CLLocationManager()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
+        
+        
         tableView.backgroundColor = UIColor.grayColor()
         
         //Gets Five Day Forecast
-        getFiveDayForecastData()
-    
+
+    getFiveDayForecastData()
+        
     }
 
     override func didReceiveMemoryWarning() {
@@ -34,51 +43,75 @@ class TableViewController: UITableViewController{
     //gets the five day forecast
     func getFiveDayForecastData()
     {
-        //API Call using restAPIManager, programmed beforehand
-        RestApiManager.sharedInstance.getForecast { json -> Void in
+        
+        var loc = [String]()
+        
+        manager = OneShotLocationManager()
+        manager!.fetchWithCompletion {location, error in
             
-            let cityName = json["city"]["name"]
-            self.city = "Weather in " + String(cityName)
-            
-            let list = json["list"]
-            for (_, subJson):(String, JSON) in list
-            {
-                //Date and Time
-                let dateTime = String(subJson["dt_txt"])
-                let rangeDate = dateTime.startIndex..<dateTime.endIndex.advancedBy(-9)
-                let rangeTime = dateTime.startIndex.advancedBy(11)..<dateTime.endIndex
-                let time = dateTime[rangeTime]
-                let date = dateTime[rangeDate]
+            // fetch location or an error
+            if let _ = location {
+                let getLoc = String(location!).componentsSeparatedByString("<")
+                let getLoc2 = getLoc[1].componentsSeparatedByString(">")
+                let getLoc3 = getLoc2[0].componentsSeparatedByString(",");
                 
-                let kTemperature = String(subJson["main"]["temp"])
-                var weather = "";
+                loc += [(getLoc3[0])]
+                loc.append(getLoc3[1])
+                print("This is " + String(loc))
                 
-                //accesses JSON list and gets weather
-                for(_,weath):(String, JSON) in subJson["weather"]
-                {
-                    weather = String(weath["main"])
+                
+                //API Call using restAPIManager, programmed beforehand
+                RestApiManager.sharedInstance.getForecast(loc) { json -> Void in
+                    
+                    let cityName = json["city"]["name"]
+                    self.city = "Weather in " + String(cityName)
+                    
+                    let list = json["list"]
+                    for (_, subJson):(String, JSON) in list
+                    {
+                        //Date and Time
+                        let dateTime = String(subJson["dt_txt"])
+                        let rangeDate = dateTime.startIndex..<dateTime.endIndex.advancedBy(-9)
+                        let rangeTime = dateTime.startIndex.advancedBy(11)..<dateTime.endIndex
+                        let time = dateTime[rangeTime]
+                        let date = dateTime[rangeDate]
+                        
+                        let kTemperature = String(subJson["main"]["temp"])
+                        var weather = "";
+                        
+                        //accesses JSON list and gets weather
+                        for(_,weath):(String, JSON) in subJson["weather"]
+                        {
+                            weather = String(weath["main"])
+                        }
+                        
+                        //removes everything except weather at a certain time
+                        if(time == "21:00:00")
+                        {
+                            let dateFormatter = NSDateFormatter()
+                            dateFormatter.dateFormat = "yyyy-MM-dd"
+                            let nDate = dateFormatter.dateFromString(date);
+                            dateFormatter.dateFormat = "EEEE"
+                            
+                            let rDate = dateFormatter.stringFromDate(nDate!)
+                            
+                            let temperature = self.kelvintoFahrenheit(kTemperature)
+                            
+                            //creates a new forecast struct
+                            let day:Forecast = Forecast(date: rDate, time: time, weather: weather ,temperature: temperature)
+                            
+                            self.forecast.insert(day, atIndex: self.forecast.count)
+                        }
+                        dispatch_async(dispatch_get_main_queue(), { tableView?.reloadData()})
+                    }
                 }
                 
-                //removes everything except weather at a certain time
-                if(time == "21:00:00")
-                {
-                    let dateFormatter = NSDateFormatter()
-                    dateFormatter.dateFormat = "yyyy-MM-dd"
-                    let nDate = dateFormatter.dateFromString(date);
-                    dateFormatter.dateFormat = "EEEE"
-                    
-                    let rDate = dateFormatter.stringFromDate(nDate!)
-                    
-                    let temperature = self.kelvintoFahrenheit(kTemperature)
-
-                    //creates a new forecast struct
-                    let day:Forecast = Forecast(date: rDate, time: time, weather: weather ,temperature: temperature)
-                    
-                    self.forecast.insert(day, atIndex: self.forecast.count)
-                }
-                dispatch_async(dispatch_get_main_queue(), { tableView?.reloadData()})
+            } else if let err = error {
+                print(err.localizedDescription)
             }
+            self.manager = nil
         }
+        
     }
     
     
@@ -105,6 +138,17 @@ class TableViewController: UITableViewController{
         cell.backgroundColor = UIColor.clearColor()
         
         return cell
+    }
+    
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        
+        let indexPath : NSIndexPath = self.tableView.indexPathForSelectedRow!
+    
+        let destViewController = segue.destinationViewController as! WeatherViewController
+        
+        let weather = forecast[indexPath.row]
+        
+        destViewController.day = weather
     }
     
     //Converts Kelvin to Fahrenheit
