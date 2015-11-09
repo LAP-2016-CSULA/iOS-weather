@@ -60,51 +60,6 @@ class TableViewController: UITableViewController{
                 print("This is " + String(loc))
                 
                 
-                //API Call using restAPIManager, programmed beforehand
-                RestApiManager.sharedInstance.getForecast(loc) { json -> Void in
-                    
-                    let cityName = json["city"]["name"]
-                    self.city = "Weather in " + String(cityName)
-                    
-                    let list = json["list"]
-                    for (_, subJson):(String, JSON) in list
-                    {
-                        //Date and Time
-                        let dateTime = String(subJson["dt_txt"])
-                        let rangeDate = dateTime.startIndex..<dateTime.endIndex.advancedBy(-9)
-                        let rangeTime = dateTime.startIndex.advancedBy(11)..<dateTime.endIndex
-                        let time = dateTime[rangeTime]
-                        let date = dateTime[rangeDate]
-                        
-                        let kTemperature = String(subJson["main"]["temp"])
-                        var weather = "";
-                        
-                        //accesses JSON list and gets weather
-                        for(_,weath):(String, JSON) in subJson["weather"]
-                        {
-                            weather = String(weath["main"])
-                        }
-                        
-                        //removes everything except weather at a certain time
-                        if(time == "21:00:00")
-                        {
-                            let dateFormatter = NSDateFormatter()
-                            dateFormatter.dateFormat = "yyyy-MM-dd"
-                            let nDate = dateFormatter.dateFromString(date);
-                            dateFormatter.dateFormat = "EEEE"
-                            
-                            let rDate = dateFormatter.stringFromDate(nDate!)
-                            
-                            let temperature = self.kelvintoFahrenheit(kTemperature)
-                            
-                            //creates a new forecast struct
-                            let day:Forecast = Forecast(date: rDate, time: time, weather: weather ,temperature: temperature)
-                            
-                            self.forecast.insert(day, atIndex: self.forecast.count)
-                        }
-                        dispatch_async(dispatch_get_main_queue(), { tableView?.reloadData()})
-                    }
-                }
                 
             } else if let err = error {
                 print(err.localizedDescription)
@@ -112,6 +67,52 @@ class TableViewController: UITableViewController{
             self.manager = nil
         }
         
+        //API Call using restAPIManager, programmed beforehand
+        RestApiManager.sharedInstance.getForecast(loc) { json -> Void in
+            
+            let cityName = json["city"]["name"]
+            self.city = "Weather in " + String(cityName)
+            
+            let list = json["list"]
+            for (_, subJson):(String, JSON) in list
+            {
+                //Date and Time
+                let dateTime = String(subJson["dt_txt"])
+                let rangeDate = dateTime.startIndex..<dateTime.endIndex.advancedBy(-9)
+                let rangeTime = dateTime.startIndex.advancedBy(11)..<dateTime.endIndex
+                let time = dateTime[rangeTime]
+                let date = dateTime[rangeDate]
+                
+                let kTemperature = String(subJson["main"]["temp"])
+                var weather = "";
+                
+                //accesses JSON list and gets weather
+                for(_,weath):(String, JSON) in subJson["weather"]
+                {
+                    weather = String(weath["main"])
+                }
+                
+                //removes everything except weather at a certain time
+                if(time == "21:00:00")
+                {
+                    let dateFormatter = NSDateFormatter()
+                    dateFormatter.dateFormat = "yyyy-MM-dd"
+                    let nDate = dateFormatter.dateFromString(date);
+                    dateFormatter.dateFormat = "EEEE"
+                    
+                    let rDate = dateFormatter.stringFromDate(nDate!)
+                    
+                    let temperature = self.kelvintoFahrenheit(kTemperature)
+                    
+                    //creates a new forecast struct
+                    let day:Forecast = Forecast(date: rDate, time: time, weather: weather ,temperature: temperature)
+                    
+                    self.forecast.insert(day, atIndex: self.forecast.count)
+                }
+                dispatch_async(dispatch_get_main_queue(), { self.tableView?.reloadData()})
+            }
+        }
+
     }
     
     
