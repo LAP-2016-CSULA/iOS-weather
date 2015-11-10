@@ -9,15 +9,15 @@
 import UIKit
 import MapKit
 
-class TableViewController: UITableViewController{
+class TableViewController: UITableViewController , UISearchDisplayDelegate, UISearchBarDelegate{
+    
+    @IBOutlet var searchBar: UISearchBar!
     
     var manager : OneShotLocationManager?
     var forecast = [Forecast]()
 //    Mutable Array may be needed, Structure will be used for now.
 //    var items = NSMutableArray()
     var city:String = ""
-    var lat: String = ""
-    var lon: String = ""
     
     let locationManager = CLLocationManager()
 
@@ -25,13 +25,14 @@ class TableViewController: UITableViewController{
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
-        
+        searchBar.showsScopeBar = true
+        searchBar.delegate = self
         
         tableView.backgroundColor = UIColor.grayColor()
         
         //Gets Five Day Forecast
 
-    getFiveDayForecastData()
+        getCurrentLocation()
         
     }
 
@@ -40,10 +41,84 @@ class TableViewController: UITableViewController{
         // Dispose of any resources that can be recreated.
     }
     
-    //gets the five day forecast
-    func getFiveDayForecastData()
-    {
+    func searchBarSearchButtonClicked(searchBar: UISearchBar) {
         
+        var loc = [String]()
+        
+        var yes = false
+        if(String(searchBar.text!.endIndex) == "5")
+        {
+            if(Int(searchBar.text!) != nil)
+            {
+                loc.append(String(searchBar.text!))
+                yes = true
+            }
+        }
+        
+        if(yes)
+        {
+            getFiveDayForecastData(loc)
+            
+            forecast.removeAll()
+        }
+    }
+    
+    
+    
+    //gets the five day forecast
+    func getFiveDayForecastData(loc : [String])
+    {
+        print(loc)
+        //API Call using restAPIManager, programmed beforehand
+        RestApiManager.sharedInstance.getForecast(loc) { json -> Void in
+            
+            let cityName = json["city"]["name"]
+            self.city = "Forecast for " + String(cityName)
+            
+            let list = json["list"]
+            for (_, subJson):(String, JSON) in list
+            {
+                //Date and Time
+                let dateTime = String(subJson["dt_txt"])
+                let rangeDate = dateTime.startIndex..<dateTime.endIndex.advancedBy(-9)
+                let rangeTime = dateTime.startIndex.advancedBy(11)..<dateTime.endIndex
+                let time = dateTime[rangeTime]
+                let date = dateTime[rangeDate]
+                
+                let kTemperature = String(subJson["main"]["temp"])
+                var weather = "";
+                
+                //accesses JSON list and gets weather
+                for(_,weath):(String, JSON) in subJson["weather"]
+                {
+                    weather = String(weath["main"])
+                }
+                
+                //removes everything except weather at a certain time
+                if(time == "21:00:00")
+                {
+                    let dateFormatter = NSDateFormatter()
+                    dateFormatter.dateFormat = "yyyy-MM-dd"
+                    let nDate = dateFormatter.dateFromString(date);
+                    dateFormatter.dateFormat = "EEEE"
+                    
+                    let rDate = dateFormatter.stringFromDate(nDate!)
+                    
+                    let temperature = self.kelvintoFahrenheit(kTemperature)
+                    
+                    //creates a new forecast struct
+                    let day:Forecast = Forecast(date: rDate, time: time, weather: weather ,temperature: temperature)
+                    
+                    self.forecast.insert(day, atIndex: self.forecast.count)
+                }
+                dispatch_sync(dispatch_get_main_queue(), { self.tableView?.reloadData()})
+            }
+        }
+        
+    }
+    
+    func getCurrentLocation()
+    {
         var loc = [String]()
         
         manager = OneShotLocationManager()
@@ -58,60 +133,13 @@ class TableViewController: UITableViewController{
                 loc += [(getLoc3[0])]
                 loc.append(getLoc3[1])
                 
-                //API Call using restAPIManager, programmed beforehand
-                RestApiManager.sharedInstance.getForecast(loc) { json -> Void in
-                    
-                    let cityName = json["city"]["name"]
-                    self.city = "Forecast for " + String(cityName)
-                    
-                    let list = json["list"]
-                    for (_, subJson):(String, JSON) in list
-                    {
-                        //Date and Time
-                        let dateTime = String(subJson["dt_txt"])
-                        let rangeDate = dateTime.startIndex..<dateTime.endIndex.advancedBy(-9)
-                        let rangeTime = dateTime.startIndex.advancedBy(11)..<dateTime.endIndex
-                        let time = dateTime[rangeTime]
-                        let date = dateTime[rangeDate]
-                        
-                        let kTemperature = String(subJson["main"]["temp"])
-                        var weather = "";
-                        
-                        //accesses JSON list and gets weather
-                        for(_,weath):(String, JSON) in subJson["weather"]
-                        {
-                            weather = String(weath["main"])
-                        }
-                        
-                        //removes everything except weather at a certain time
-                        if(time == "21:00:00")
-                        {
-                            let dateFormatter = NSDateFormatter()
-                            dateFormatter.dateFormat = "yyyy-MM-dd"
-                            let nDate = dateFormatter.dateFromString(date);
-                            dateFormatter.dateFormat = "EEEE"
-                            
-                            let rDate = dateFormatter.stringFromDate(nDate!)
-                            
-                            let temperature = self.kelvintoFahrenheit(kTemperature)
-                            
-                            //creates a new forecast struct
-                            let day:Forecast = Forecast(date: rDate, time: time, weather: weather ,temperature: temperature)
-                            
-                            self.forecast.insert(day, atIndex: self.forecast.count)
-                        }
-                        dispatch_sync(dispatch_get_main_queue(), { self.tableView?.reloadData()})
-                    }
-                }
-
-                
+                self.getFiveDayForecastData(loc)
                 
             } else if let err = error {
                 print(err.localizedDescription)
             }
             self.manager = nil
         }
-        
     }
     
     

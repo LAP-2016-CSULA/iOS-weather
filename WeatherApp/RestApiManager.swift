@@ -20,22 +20,21 @@ class RestApiManager : NSObject {
     
     func getForecast(lat: [String], onCompletion: (JSON) -> Void) {
         
-        let link = baseURL+"?lat="+lat[0]+"&lon="+lat[1]+apikey
         
-        print(link)
-        makeHTTPGetRequest(link, onCompletion: { json , err -> Void in
-            onCompletion(json)
-        })
-    }
-    
-    func getForecast(zip: String, onCompletion: (JSON) -> Void) {
-        
-        let link = baseURL+"?zip="+apikey
-        
-        print(link)
-        makeHTTPGetRequest(link, onCompletion: { json , err -> Void in
-            onCompletion(json)
-        })
+        if(String(lat.endIndex) == "2")
+        {
+            let link = baseURL+"?lat="+lat[0]+"&lon="+lat[1]+apikey
+            makeHTTPGetRequest(link, onCompletion: { json , err -> Void in
+                onCompletion(json)
+            })
+        }
+        else if(String(lat.endIndex) == "1")
+        {
+            let link = baseURL+"?zip="+lat[0]+apikey
+            makeHTTPGetRequest(link, onCompletion: { json , err -> Void in
+                onCompletion(json)
+            })
+        }
     }
     
     
