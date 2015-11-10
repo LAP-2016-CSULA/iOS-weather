@@ -12,12 +12,15 @@ import Foundation
 class WeatherViewController: UIViewController{
     
     @IBOutlet var weatherPic: UIImageView!
+    @IBOutlet var temperature: UILabel!
     @IBOutlet var weatherTitle: UILabel!
     var day : Forecast?
     override func viewDidLoad()
     {
         super.viewDidLoad()
         weatherTitle.text = day?.weather
+    
+        temperature.text = day?.temperature
         
         if(day?.weather.lowercaseString == "clear")
         {
@@ -35,6 +38,7 @@ class WeatherViewController: UIViewController{
         {
             weatherPic.image = UIImage(named:"background")
         }
+        
         
     }
     

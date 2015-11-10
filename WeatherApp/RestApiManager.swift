@@ -28,6 +28,17 @@ class RestApiManager : NSObject {
         })
     }
     
+    func getForecast(zip: String, onCompletion: (JSON) -> Void) {
+        
+        let link = baseURL+"?zip="+apikey
+        
+        print(link)
+        makeHTTPGetRequest(link, onCompletion: { json , err -> Void in
+            onCompletion(json)
+        })
+    }
+    
+    
     
     func makeHTTPGetRequest(path: String, onCompletion: ServiceResponse)
     {

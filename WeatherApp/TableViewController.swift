@@ -57,13 +57,12 @@ class TableViewController: UITableViewController{
                 
                 loc += [(getLoc3[0])]
                 loc.append(getLoc3[1])
-                print("This is " + String(loc))
                 
                 //API Call using restAPIManager, programmed beforehand
                 RestApiManager.sharedInstance.getForecast(loc) { json -> Void in
                     
                     let cityName = json["city"]["name"]
-                    self.city = "Weather in " + String(cityName)
+                    self.city = "Forecast for " + String(cityName)
                     
                     let list = json["list"]
                     for (_, subJson):(String, JSON) in list
